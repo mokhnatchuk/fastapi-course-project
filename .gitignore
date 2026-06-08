@@ -16,3 +16,4 @@ venv/
 .Trash-*
 .nfs*
 .zed/
+postgres_data/
