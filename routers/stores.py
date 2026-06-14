@@ -1,11 +1,7 @@
 import logging
-from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from models.store import Store
 from schemas.store import StoreCreate, StoreRead, StoreUpdate
-from settings.db import get_db
+from services.store_service import StoreService, get_store_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/stores", tags=["Stores"])
@@ -16,11 +12,10 @@ router = APIRouter(prefix="/stores", tags=["Stores"])
     response_model=list[StoreRead],
 )
 async def get_stores(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    store_service: StoreService = Depends(get_store_service),
 ):
     try:
-        result = await db.execute(select(Store))
-        return result.scalars().all()
+        return await store_service.get_all()
     except Exception as exc:
         logger.exception("Failed to get stores")
         raise HTTPException(
@@ -35,13 +30,10 @@ async def get_stores(
 )
 async def get_store(
     store_id: int,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    store_service: StoreService = Depends(get_store_service),
 ):
     try:
-        result = await db.execute(
-            select(Store).where(Store.id == store_id),
-        )
-        store = result.scalars().first()
+        store = await store_service.get_by_id(store_id=store_id)
         if not store:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -65,14 +57,10 @@ async def get_store(
 )
 async def create_store(
     store_data: StoreCreate,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    store_service: StoreService = Depends(get_store_service),
 ):
     try:
-        new_store = Store(**store_data.model_dump())
-        db.add(new_store)
-        await db.commit()
-        await db.refresh(new_store)
-        return new_store
+        return await store_service.create(data=store_data)
     except Exception as exc:
         logger.exception("Failed to create store")
         raise HTTPException(
@@ -88,24 +76,18 @@ async def create_store(
 async def update_store(
     store_id: int,
     store_update: StoreUpdate,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    store_service: StoreService = Depends(get_store_service),
 ):
     try:
-        result = await db.execute(
-            select(Store).where(Store.id == store_id),
+        store = await store_service.update(
+            store_id=store_id,
+            data=store_update,
         )
-        store = result.scalars().first()
         if not store:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Store not found",
             )
-
-        for field, value in store_update.model_dump(exclude_unset=True).items():
-            setattr(store, field, value)
-
-        await db.commit()
-        await db.refresh(store)
         return store
     except HTTPException:
         raise
@@ -123,21 +105,15 @@ async def update_store(
 )
 async def delete_store(
     store_id: int,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    store_service: StoreService = Depends(get_store_service),
 ):
     try:
-        result = await db.execute(
-            select(Store).where(Store.id == store_id),
-        )
-        store = result.scalars().first()
-        if not store:
+        deleted = await store_service.delete(store_id=store_id)
+        if not deleted:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Store not found",
             )
-
-        await db.delete(store)
-        await db.commit()
         return None
     except HTTPException:
         raise

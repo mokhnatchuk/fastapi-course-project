@@ -1,19 +1,8 @@
 from fastapi import FastAPI, HTTPException, status
-from settings.db import ping, engine
-from contextlib import asynccontextmanager
-from models import Base
 from routers import categories, promotions, stores
+from settings.db import ping
 
-
-@asynccontextmanager
-async def lifespan(app: FastAPI):
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-    yield
-    await engine.dispose()
-
-
-app = FastAPI(lifespan=lifespan)
+app = FastAPI()
 
 app.include_router(stores.router)
 app.include_router(categories.router)

@@ -1,11 +1,7 @@
 import logging
-from typing import Annotated
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-from models.category import Category
 from schemas.category import CategoryCreate, CategoryRead, CategoryUpdate
-from settings.db import get_db
+from services.category_service import CategoryService, get_category_service
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/categories", tags=["Categories"])
@@ -16,11 +12,10 @@ router = APIRouter(prefix="/categories", tags=["Categories"])
     response_model=list[CategoryRead],
 )
 async def get_categories(
-    db: Annotated[AsyncSession, Depends(get_db)],
+    category_service: CategoryService = Depends(get_category_service),
 ):
     try:
-        result = await db.execute(select(Category))
-        return result.scalars().all()
+        return await category_service.get_all()
     except Exception as exc:
         logger.exception("Failed to get categories")
         raise HTTPException(
@@ -35,13 +30,10 @@ async def get_categories(
 )
 async def get_category(
     category_id: int,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    category_service: CategoryService = Depends(get_category_service),
 ):
     try:
-        result = await db.execute(
-            select(Category).where(Category.id == category_id),
-        )
-        category = result.scalars().first()
+        category = await category_service.get_by_id(category_id=category_id)
         if not category:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
@@ -65,14 +57,10 @@ async def get_category(
 )
 async def create_category(
     category_data: CategoryCreate,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    category_service: CategoryService = Depends(get_category_service),
 ):
     try:
-        new_category = Category(**category_data.model_dump())
-        db.add(new_category)
-        await db.commit()
-        await db.refresh(new_category)
-        return new_category
+        return await category_service.create(data=category_data)
     except Exception as exc:
         logger.exception("Failed to create category")
         raise HTTPException(
@@ -88,24 +76,18 @@ async def create_category(
 async def update_category(
     category_id: int,
     category_update: CategoryUpdate,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    category_service: CategoryService = Depends(get_category_service),
 ):
     try:
-        result = await db.execute(
-            select(Category).where(Category.id == category_id),
+        category = await category_service.update(
+            category_id=category_id,
+            data=category_update,
         )
-        category = result.scalars().first()
         if not category:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Category not found",
             )
-
-        for field, value in category_update.model_dump(exclude_unset=True).items():
-            setattr(category, field, value)
-
-        await db.commit()
-        await db.refresh(category)
         return category
     except HTTPException:
         raise
@@ -123,21 +105,15 @@ async def update_category(
 )
 async def delete_category(
     category_id: int,
-    db: Annotated[AsyncSession, Depends(get_db)],
+    category_service: CategoryService = Depends(get_category_service),
 ):
     try:
-        result = await db.execute(
-            select(Category).where(Category.id == category_id),
-        )
-        category = result.scalars().first()
-        if not category:
+        deleted = await category_service.delete(category_id=category_id)
+        if not deleted:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Category not found",
             )
-
-        await db.delete(category)
-        await db.commit()
         return None
     except HTTPException:
         raise

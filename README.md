@@ -19,3 +19,7 @@
 
 Локальний сервер: http://127.0.0.1:8000
 Swagger UI: http://127.0.0.1:8000/docs
+
+## Міграції бази даних:
+- Команда для створення нової міграції `docker compose exec web alembic revision --autogenerate -m "опис"`
+- Команда для застосування міграції `docker compose exec web alembic upgrade head`
