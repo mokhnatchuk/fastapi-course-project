@@ -1,5 +1,4 @@
 from functools import lru_cache
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -17,7 +16,7 @@ class DatabaseSettings(BaseSettings):
 
 @lru_cache
 def get_db_settings() -> DatabaseSettings:
-    return DatabaseSettings()
+    return DatabaseSettings()  # pyright: ignore[reportCallIssue]
 
 
 db_settings = get_db_settings()

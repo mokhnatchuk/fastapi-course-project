@@ -1,7 +1,18 @@
 from fastapi import FastAPI, HTTPException, status
-from settings.db import ping
+from settings.db import ping, engine
+from contextlib import asynccontextmanager
+from models import Base
 
-app = FastAPI()
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    yield
+    await engine.dispose()
+
+
+app = FastAPI(lifespan=lifespan)
 
 
 @app.get("/")
