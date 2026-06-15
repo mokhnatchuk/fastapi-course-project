@@ -1,5 +1,5 @@
 from fastapi import FastAPI, HTTPException, status
-from routers import categories, promotions, stores
+from routers import categories, promotions, stores, files
 from settings.db import ping
 
 app = FastAPI()
@@ -7,6 +7,7 @@ app = FastAPI()
 app.include_router(stores.router)
 app.include_router(categories.router)
 app.include_router(promotions.router)
+app.include_router(files.router)
 
 
 @app.get("/")

@@ -2,7 +2,7 @@ from __future__ import annotations
 from datetime import datetime
 from decimal import Decimal
 from typing import TYPE_CHECKING
-from sqlalchemy import ForeignKey, Integer, Numeric, String, text
+from sqlalchemy import ForeignKey, Integer, Numeric, String, text, DateTime
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from .base import Base
 
@@ -37,12 +37,20 @@ class Promotion(Base):
         nullable=False,
     )
     image_path: Mapped[str | None] = mapped_column(String, nullable=True)
-    starts_at: Mapped[datetime] = mapped_column(nullable=False)
-    ends_at: Mapped[datetime] = mapped_column(nullable=False)
+    starts_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
+    ends_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
     created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         server_default=text("now()"),
     )
     updated_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
         server_default=text("now()"),
         onupdate=datetime.now,
     )

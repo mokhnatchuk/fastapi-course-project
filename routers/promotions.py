@@ -2,6 +2,8 @@ import logging
 from fastapi import APIRouter, Depends, HTTPException, status
 from schemas.promotion import PromotionCreate, PromotionRead, PromotionUpdate
 from services.promotion_service import PromotionService, get_promotion_service
+from fastapi.responses import FileResponse
+from services.pdf_generator import generate_promotions_report
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/promotions", tags=["Promotions"])
@@ -21,6 +23,29 @@ async def get_promotions(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to get promotions",
+        ) from exc
+
+
+@router.get(
+    path="/report",
+    summary="Generate PDF report of all promotions",
+)
+async def get_promotions_report(
+    promotion_service: PromotionService = Depends(get_promotion_service),
+):
+    try:
+        promotions = await promotion_service.get_all()
+        filepath = generate_promotions_report(promotions)
+        return FileResponse(
+            path=filepath,
+            filename="promotions_report.pdf",
+            media_type="application/pdf",
+        )
+    except Exception as exc:
+        logger.exception("Failed to generate promotions report")
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to generate report",
         ) from exc
 
 
