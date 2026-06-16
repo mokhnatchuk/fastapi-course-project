@@ -4,6 +4,9 @@ from schemas.promotion import PromotionCreate, PromotionRead, PromotionUpdate
 from services.promotion_service import PromotionService, get_promotion_service
 from fastapi.responses import FileResponse
 from services.pdf_generator import generate_promotions_report
+from authx import RequestToken
+from services.user_service import UserService, get_user_service
+from utils.security import security
 
 logger = logging.getLogger(__name__)
 router = APIRouter(prefix="/promotions", tags=["Promotions"])
@@ -85,6 +88,7 @@ async def get_promotion(
 async def create_promotion(
     promotion_data: PromotionCreate,
     promotion_service: PromotionService = Depends(get_promotion_service),
+    token: RequestToken = Depends(security.access_token_required),
 ):
     try:
         return await promotion_service.create(data=promotion_data)
@@ -133,8 +137,19 @@ async def update_promotion(
 async def delete_promotion(
     promotion_id: int,
     promotion_service: PromotionService = Depends(get_promotion_service),
+    user_service: UserService = Depends(get_user_service),
+    token: RequestToken = Depends(security.access_token_required),
 ):
     try:
+        current_user = await user_service.get_by_id(
+            user_id=int(token.sub),  # pyright: ignore[reportAttributeAccessIssue]
+        )
+        if not current_user or current_user.role != "admin":
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="Only admins can delete promotions",
+            )
+
         deleted = await promotion_service.delete(promotion_id=promotion_id)
         if not deleted:
             raise HTTPException(
