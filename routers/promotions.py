@@ -17,10 +17,12 @@ router = APIRouter(prefix="/promotions", tags=["Promotions"])
     response_model=list[PromotionRead],
 )
 async def get_promotions(
+    limit: int = 50,
+    offset: int = 0,
     promotion_service: PromotionService = Depends(get_promotion_service),
 ):
     try:
-        return await promotion_service.get_all()
+        return await promotion_service.get_all(limit=limit, offset=offset)
     except Exception as exc:
         logger.exception("Failed to get promotions")
         raise HTTPException(
@@ -37,7 +39,7 @@ async def get_promotions_report(
     promotion_service: PromotionService = Depends(get_promotion_service),
 ):
     try:
-        promotions = await promotion_service.get_all()
+        promotions = await promotion_service.get_all_unpaginated()
         filepath = generate_promotions_report(promotions)
         return FileResponse(
             path=filepath,

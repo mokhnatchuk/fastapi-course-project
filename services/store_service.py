@@ -11,8 +11,8 @@ class StoreService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self) -> Sequence[Store]:
-        result = await self.db.execute(select(Store))
+    async def get_all(self, limit: int = 50, offset: int = 0) -> Sequence[Store]:
+        result = await self.db.execute(select(Store).limit(limit).offset(offset))
         return result.scalars().all()
 
     async def get_by_id(self, store_id: int) -> Store | None:

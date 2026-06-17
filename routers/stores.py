@@ -12,10 +12,12 @@ router = APIRouter(prefix="/stores", tags=["Stores"])
     response_model=list[StoreRead],
 )
 async def get_stores(
+    limit: int = 50,
+    offset: int = 0,
     store_service: StoreService = Depends(get_store_service),
 ):
     try:
-        return await store_service.get_all()
+        return await store_service.get_all(limit=limit, offset=offset)
     except Exception as exc:
         logger.exception("Failed to get stores")
         raise HTTPException(

@@ -11,8 +11,8 @@ class CategoryService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self) -> Sequence[Category]:
-        result = await self.db.execute(select(Category))
+    async def get_all(self, limit: int = 50, offset: int = 0) -> Sequence[Category]:
+        result = await self.db.execute(select(Category).limit(limit).offset(offset))
         return result.scalars().all()
 
     async def get_by_id(self, category_id: int) -> Category | None:

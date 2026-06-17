@@ -11,7 +11,11 @@ class PromotionService:
     def __init__(self, db: AsyncSession):
         self.db = db
 
-    async def get_all(self) -> Sequence[Promotion]:
+    async def get_all(self, limit: int = 50, offset: int = 0) -> Sequence[Promotion]:
+        result = await self.db.execute(select(Promotion).limit(limit).offset(offset))
+        return result.scalars().all()
+
+    async def get_all_unpaginated(self) -> Sequence[Promotion]:
         result = await self.db.execute(select(Promotion))
         return result.scalars().all()
 

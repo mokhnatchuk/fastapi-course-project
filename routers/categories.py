@@ -12,10 +12,12 @@ router = APIRouter(prefix="/categories", tags=["Categories"])
     response_model=list[CategoryRead],
 )
 async def get_categories(
+    limit: int = 50,
+    offset: int = 0,
     category_service: CategoryService = Depends(get_category_service),
 ):
     try:
-        return await category_service.get_all()
+        return await category_service.get_all(limit=limit, offset=offset)
     except Exception as exc:
         logger.exception("Failed to get categories")
         raise HTTPException(
