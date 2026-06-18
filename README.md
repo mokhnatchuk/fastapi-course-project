@@ -14,12 +14,31 @@
 4. Запустити проєкт командою `uv run fastapi dev main.py`
 
 ## Як запустити через Docker:
-1. Файл `.env` має мати `DATABASE_URL`
-2. Зібрати та запустити контейнер командою `docker compose up --build`
+```bash
+git clone https://github.com/mokhnatchuk/fastapi-course-project.git && \
+cd fastapi-course-project && \
+cp .env.example .env && \
+docker compose up --build
+```
 
 Локальний сервер: http://127.0.0.1:8000
 Swagger UI: http://127.0.0.1:8000/docs
 
 ## Міграції бази даних:
-- Команда для створення нової міграції `docker compose exec web alembic revision --autogenerate -m "опис"`
-- Команда для застосування міграції `docker compose exec web alembic upgrade head`
+
+Команда для створення нової міграції:
+```bash
+docker compose exec web uv run alembic revision --autogenerate -m "опис"
+```
+
+Команда для застосування міграції:
+```bash
+docker compose exec web uv run alembic upgrade head
+```
+
+---
+
+Команда щоб зробити юзера адміном:
+```bash
+docker compose exec db psql -U postgres -d fastapi_db -c "UPDATE users SET role='admin' WHERE email='...';"
+```

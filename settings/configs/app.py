@@ -12,6 +12,7 @@ class DatabaseSettings(BaseSettings):
     )
 
     DATABASE_URL: str
+    JWT_SECRET_KEY: str
 
 
 @lru_cache

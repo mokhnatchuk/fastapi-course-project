@@ -1,8 +1,9 @@
 from authx import AuthX, AuthXConfig
 from passlib.context import CryptContext
+from settings.configs.app import db_settings
 
 config = AuthXConfig()
-config.JWT_SECRET_KEY = "secret-key"
+config.JWT_SECRET_KEY = db_settings.JWT_SECRET_KEY
 config.JWT_ACCESS_COOKIE_NAME = "access_token"
 config.JWT_TOKEN_LOCATION = ["headers"]
 
